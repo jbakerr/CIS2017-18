@@ -33,6 +33,8 @@ data <- data[, ! (names(data) %in% drops)]
 
 d <- data %>% group_by(Home.School, Entry.Date, Support.Date, Provider.Type.1, Activity, Student.Support.Category, 
                        Hours, Tier) %>% summarize(groupsize = n())
+
+
 #d$groupsize[(!is.na(d$Individual.or.Group)) & d$Individual.or.Group == "Individual"] <- 1
 
 data <- merge(data, d, by = c("Home.School", "Entry.Date", "Support.Date", "Student.Support.Category",
