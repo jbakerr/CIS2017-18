@@ -14,7 +14,7 @@ library(tidyr)
 library(XLConnect)
 library(data.table)
 library(lubridate)
-library(xlsx)
+#library(xlsx)
 
 ###################################      Generating Student List      ##########################################
 # Set the working directory to the local folder containing dataset. Can be done manually
