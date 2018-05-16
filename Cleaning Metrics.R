@@ -8,73 +8,57 @@ if(file.exists(macdatawd)){
   }
 }
 
-#Load Worksheet
+#Load Student Progress Monitoring Excel Sheet
 progress<-readWorksheetFromFile('progress.xlsx', sheet=1, header = T, startRow = 1)
 
 
-#Rename Grading Quarters
+#Rename Grading Quarters - make sure that the column numbers are acurate 
 colnames(progress)[11:14] <- c("Q1", "Q2", "Q3", "Q4")
-#Removing Test Data
-#progress <- subset(progress, !progress$Case.Manager == "Nina Wilson")
-#progress <- subset(progress, !progress$Case.Manager == "Test Account")
 
-#Changing Metric Title
+
+#Changing Metric Title - make sure that the first section in quotes is exactly as found in the excel file. 
 progress$Metric[progress$Metric =='Core Course Grades: Eng/Lang Arts/Reading/Writing'] <- "ELA"
-
 progress$Metric[progress$Metric =='Core Course Grades: Math 1'] <- "Math"
-
 progress$Metric[progress$Metric =='Core Course Grades: Science'] <- "Science"
-
-
 progress <- progress[ ! (progress$Metric =='Standardized test score: English / Language Arts'),]
-
 progress <- progress[ ! (progress$Metric =='Standardized test score: Science'),]
 
 
+progress <- progress[,c(1:8, 9:12,21,13, 14:20)]
 
+
+#Changing 
+colnames(progress)[4] <- c("Student")
 
 #Dropping Unneeded Columns
-
 progress$Latest.Progress <- NULL
-#progress$Target <- NULL
 progress$Target.Set.Date <- NULL
 progress$Affiliate <- NULL
 progress$Enrollment.End.Date <- NULL
 progress$School.Year <- NULL
 progress$Baseline.Date <- NULL
-#progress$Baseline <- NULL
+progress$Goal <- NULL
 
-
-
-#for now dropping Q2, Q3, Q4
-#progress$Q2 <- NULL
-
-# progress$Q4 <- NULL
-
-#removing unwanted metrics
-
+#removing unwanted metrics - if the column title doesn't apear in the list of metrics from the environment.r script, then they will be deleted.
 progress <- subset(progress, progress$Metric %in% metrics)
 
 
-#Adjusting Attendance Rate from days to percentage NEED TO FIX TO ALLOW FOR MORE THAN 1 QUARTER OF DATA 
-
-elem.adjust <- progress$Q1[progress$Metric == "Attendance Rate" & !is.na(progress$Q1) & (progress$School %in% elem) & progress$Q1 < 50]
-elem.adjust <- (45-elem.adjust)/45
-elem.adjust <- elem.adjust * 100
-
-progress$Q1[progress$Metric == "Attendance Rate" & progress$School %in% elem & progress$Q1 < 50 & !is.na(progress$Q1)] <- elem.adjust
-
-high.adjust <- progress$Q1[progress$Metric == "Attendance Rate" & !is.na(progress$Q1) & (progress$School %in% high) & progress$Q1 < 1]
-high.adjust <- high.adjust *100
-
-progress$Q1[progress$Metric == "Attendance Rate" & !is.na(progress$Q1) & (progress$School %in% high) & progress$Q1 < 1] <- high.adjust
-
-#summary(subset(progress$Q1, progress$Metric == "Attendance Rate" & progress$School %in% high))
+#Adjusting Attendance Rate from days to percentage not needed any because of CISDM auto calculation. Leaving it in in case that changes.
+# 
+# elem.adjust <- progress$Q1[progress$Metric == "Attendance Rate" & !is.na(progress$Q1) & (progress$School %in% elem) & progress$Q1 < 50]
+# elem.adjust <- (45-elem.adjust)/45
+# elem.adjust <- elem.adjust * 100
+# 
+# progress$Q1[progress$Metric == "Attendance Rate" & progress$School %in% elem & progress$Q1 < 50 & !is.na(progress$Q1)] <- elem.adjust
+# 
+# high.adjust <- progress$Q1[progress$Metric == "Attendance Rate" & !is.na(progress$Q1) & (progress$School %in% high) & progress$Q1 < 1]
+# high.adjust <- high.adjust *100
+# 
+# progress$Q1[progress$Metric == "Attendance Rate" & !is.na(progress$Q1) & (progress$School %in% high) & progress$Q1 < 1] <- high.adjust
+# 
 
 
 #Creating Names for each quarter / subject combination
-#progress$Baseline <- NULL 
-
 
 progress <- gather(progress, Period, Value, Baseline:Q4, factor_key = T)
 quartersubject <- paste(progress$Period, "_", progress$Metric, sep = "")
@@ -82,18 +66,14 @@ progress$quartersubject <- quartersubject
 
 
 #removing duplicates
+# This is a soft option that just deletes one of the duplicates arbitrarily
 
-progress <- progress[!duplicated(progress[,c("School", "Student.Name","Metric", "Value", "Student.ID", "Period", "Enrollment.Status")]), ] # This is a soft option that just deletes one of the duplicates arbitrarily
+progress <- progress[!duplicated(progress[,c("School", "Student", "Metric", "Value", "Student.ID", "Period", "Enrollment.Status")]), ] 
 
-
-
-
-
-progress$Goal <- NULL
 #Creating a wide data frame
 progress <- spread(progress[, ! colnames(progress) %in% c("Metric", "Period")], quartersubject, Value)
 
-
+# Checking for incomplete progress monitoring settups. If a studuent is missing baseline or goal data they will be flagged as TRUE
 progress$attend_error <- ifelse(is.na(progress$`Baseline_Attendance Rate`) & is.na(progress$`Target_Attendance Rate`), TRUE, FALSE)
 progress$math_error <- ifelse(is.na(progress$Baseline_Math) & is.na(progress$Target_Math), TRUE, FALSE)
 progress$science_error <- ifelse(is.na(progress$Baseline_Science) & is.na(progress$Target_Science), TRUE, FALSE)
@@ -101,6 +81,7 @@ progress$ELA_error <- ifelse(is.na(progress$Baseline_ELA) & is.na(progress$Targe
 progress$suspension_error <- ifelse(is.na(progress$Baseline_Suspensions) & is.na(progress$Target_Suspensions), TRUE, FALSE)
 progress$error <- ifelse(progress$attend_error == T | progress$math_error == T | progress$science_error == T | progress$ELA_error == T, TRUE, FALSE)
 
+#Removing Baseline and Target data now that it isn't relevant
 progress$`Baseline_Attendance Rate` <- NULL
 progress$Baseline_ELA <- NULL
 progress$Baseline_Math <- NULL
@@ -123,26 +104,11 @@ caselist <- data.frame(apply(caselist, 2, function(x) gsub("^$|^ $", NA, x)))
 caselist  <- caselist[,colSums(is.na(caselist))<nrow(caselist)]
 
 
-
-
-
+#Changing name of columns, make sure that the column numbers are still accurate. 
 colnames(caselist)[1:2] <- c("School","Student.ID")
 
+#Changing name of the progress dataset 
 
-#caselist <- readWorksheetFromFile('caselist.xlsx', sheet = 1, header = T, startRow = 10) 
-
-
-#Flagged Exited Students
-# exited <- readWorksheetFromFile('exit.xlsx', sheet = 1, header = T, startRow = 1) 
-#  
-# caselist$exited <- FALSE
-# caselist$exited <- ifelse(caselist$Student.ID %in% exited$Student.ID, caselist$exited <- T, caselist$exited <- F)
-
-
-
-
-
-colnames(progress)[4] <- c("Student")
 caselist$Student.ID <- as.character(caselist$Student.ID)
 progress$Student.ID <- as.character(progress$Student.ID)
 progress$Enrollment.Status <- NULL

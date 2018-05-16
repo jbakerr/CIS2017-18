@@ -13,11 +13,15 @@ if(file.exists(macdatawd)){
 # This is the "Tier II and III Support Detail" report. 
 # **** IMPORTANT ***** delete the last row that sums all hours before saving the excel file. That row will cause problems
 #data<-('services.csv', skip = 4, header = T)
-
+# xlsxFile <- system.file("/Volumes/GoogleDrive/My Drive/Data Files/services.xlsx", package = "openxlsx")
 data <-readWorksheetFromFile('services.xlsx', sheet=1, header = T, startRow = 2)
 data <- data.frame(apply(data, 2, function(x) gsub("^$|^ $", NA, x)))
 
 data  <- data[,colSums(is.na(data))<nrow(data)]
+
+# # origin = as.Date("1900-01-01", "%Y-%m-%d", origin = '2016-01-01')
+# data$Entry.Date <- convertToDateTime(data$Entry.Date, origin = '2017-08-09', tx = "EST")
+# data$Support.Date <- as.Date(data$Support.Date, origin = "1900-01-01")
 
 #data<-readWorksheetFromFile('services.xlsx', sheet=1, header = T, startRow = 10)
 colnames(data)[1:2] <- c("Home.School","Student.ID")

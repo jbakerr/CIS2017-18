@@ -6,15 +6,21 @@
 #install.packages("lubridate")
 #instal.packages("xlsx")
 #options(java.parameters = "-Xmx4g" )
-options(java.parameters = "-Xmx1024m")
+# install.packages('openxlsx')
+# install.packages('readxl')
+# install.packages("devtools")
+options(java.parameters = "-Xmx3000m")
 
 library(plyr) # ****IMPORTANT**** Load plyr before dplyr- they have some of the same named functions, and if you load in a different order it will cause problems
 library(dplyr)
 library(tidyr)
 library(XLConnect)
-library(data.table)
+# library(data.table)
 library(lubridate)
-#library(xlsx)
+# library(openxlsx)
+# library(xlsx)
+# library(readxl)
+
 
 ###################################      Generating Student List      ##########################################
 # Set the working directory to the local folder containing dataset. Can be done manually
