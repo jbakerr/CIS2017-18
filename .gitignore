@@ -1,5 +1,6 @@
 *.Rhistory
 .Rproj.user
 CIS2017_18.Rproj
-python/*
 !python/21dc/21dc_select_all.py
+python/*
+
