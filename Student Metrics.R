@@ -1,4 +1,4 @@
-macdatawd <- "/Volumes/GoogleDrive/My Drive/Data Files"
+macdatawd <- "/Volumes/GoogleDrive/Team Drives/Data/CISDM Files/"
 windowsdatawd <- "C:/Users/USER/Google Drive/Data Files"
 if(file.exists(macdatawd)){
   setwd(file.path(macdatawd))
@@ -107,7 +107,9 @@ stlist$`Q_3 criteria` <- 0
 stlist$`Q_4 criteria` <- 0
 stlist$criteria <- 0
 
-
+stlist$attend_criteria <- F
+stlist$beh_criteria <- F
+stlist$course_criteria <- F
 
 criteria_cats <- c(117:120)
 
@@ -150,12 +152,20 @@ for(i in q4_subjects){
   
 }
 
+stlist$max_criteria <- pmax(stlist$`Q_1 criteria`, stlist$`Q_2 criteria`, stlist$`Q_3 criteria`, stlist$`Q_4 criteria`)
+
+
+stlist$course_criteria <- ifelse(stlist$max_criteria == 1, stlist$course_criteria <- T, stlist$course_criteria <- F)
 
 stlist$`Q_1 criteria` <- ifelse(stlist$`Q1_Suspensions` == 0 | is.na(stlist$`Q1_Suspensions`) , stlist$`Q_1 criteria`, stlist$`Q_1 criteria` + 1)
 stlist$`Q_2 criteria` <- ifelse(stlist$`Q2_Suspensions` == 0 | is.na(stlist$`Q2_Suspensions`) , stlist$`Q_2 criteria`, stlist$`Q_2 criteria` + 1)
 stlist$`Q_3 criteria` <- ifelse(stlist$`Q3_Suspensions` == 0 | is.na(stlist$`Q3_Suspensions`) , stlist$`Q_3 criteria`, stlist$`Q_3 criteria` + 1)
 stlist$`Q_4 criteria` <- ifelse(stlist$`Q4_Suspensions` == 0 | is.na(stlist$`Q4_Suspensions`) , stlist$`Q_4 criteria`, stlist$`Q_4 criteria` + 1)
 
+stlist$max_criteria <- pmax(stlist$`Q_1 criteria`, stlist$`Q_2 criteria`, stlist$`Q_3 criteria`, stlist$`Q_4 criteria`)
+
+
+stlist$beh_criteria <- ifelse(stlist$max_criteria == 2 | (stlist$max_criteria == 1 & stlist$course_criteria == F), stlist$beh_criteria <- T, stlist$beh_criteria <- F)
 
 
 stlist$`Q_1 criteria` <- ifelse(stlist$`Q1_Attendance Rate` > 90 | is.na(stlist$`Q1_Attendance Rate`), stlist$`Q_1 criteria`, stlist$`Q_1 criteria` + 1)
@@ -165,6 +175,31 @@ stlist$`Q_4 criteria` <- ifelse(stlist$`Q4_Attendance Rate` > 90 | is.na(stlist$
 
 
 stlist$max_criteria <- pmax(stlist$`Q_1 criteria`, stlist$`Q_2 criteria`, stlist$`Q_3 criteria`, stlist$`Q_4 criteria`)
+
+stlist$attend_criteria <- ifelse(stlist$max_criteria == 3 | (stlist$max_criteria == 1 & stlist$course_criteria == F & stlist$beh_criteria == F) | 
+                                   (stlist$max_criteria == 2 & (stlist$beh_criteria == F | stlist$course_criteria == F)), stlist$attend_criteria <- T, stlist$attend_criteria <- F)
+
+
+# Determining what quarters to include in metric check
+
+start_year <-  as.integer(format(Sys.Date(), "%Y"))
+
+if (as.Date(Sys.Date()) > as.Date(paste(start_year, "-08-15", sep = "")) &
+    as.Date(Sys.Date()) < as.Date(paste(start_year, "-12-31", sep = ""))){
+  
+  start_year <- start_year
+} else{
+  
+  start_year <- start_year - 1
+}
+
+stlist$First.CIS.Enrollment.Date <- as.Date(stlist$First.CIS.Enrollment.Date)
+
+
+Q1_date <- as.Date(paste(start_year, "-10-31", sep = ""))
+Q2_date <- as.Date(paste(start_year + 1, "-01-15", sep = ""))
+Q3_date <- as.Date(paste(start_year + 1, "-03-31", sep = ""))
+Q4_date <- as.Date(paste(start_year + 1, "-06-10", sep = ""))
 
 
 #Creates no-metric column
@@ -177,11 +212,30 @@ stlist$no_metrics_Q4 <- FALSE
 
 metrics_colums <- c("Q1_Science", "Q1_Math", "Q1_ELA","Q1_Suspensions", "Q1_Attendance Rate","Q2_Science", "Q2_Math", "Q2_ELA","Q2_Suspensions", "Q2_Attendance Rate","Q3_Science", "Q3_Math", "Q3_ELA","Q3_Suspensions", "Q3_Attendance Rate", "Q4_Science", "Q4_Math", "Q4_ELA","Q4_Suspensions", "Q4_Attendance Rate")
 
-stlist$no_metrics <- (rowSums(is.na(stlist[, metrics_colums])) == length(metrics_colums))
-stlist$no_metrics_Q1 <- (rowSums(is.na(stlist[, metrics_colums[1:5]])) == length(metrics_colums[1:5]))
-stlist$no_metrics_Q2 <- (rowSums(is.na(stlist[, metrics_colums[6:10]])) == length(metrics_colums[6:10]))
-stlist$no_metrics_Q3 <- (rowSums(is.na(stlist[, metrics_colums[11:15]])) == length(metrics_colums[11:15]))
-stlist$no_metrics_Q4 <- (rowSums(is.na(stlist[, metrics_colums[16:20]])) == length(metrics_colums[16:20]))
+stlist$no_metrics_Q1 <- ifelse(Sys.Date() > Q1_date & 
+                                 stlist$First.CIS.Enrollment.Date < Q1_date, 
+       stlist$no_metrics_Q1 <- (rowSums(is.na(stlist[, metrics_colums[1:5]])) > 1 ),
+       stlist$no_metrics_Q1 <- FALSE)
+
+stlist$no_metrics_Q2 <- ifelse(Sys.Date() > Q2_date & 
+                                 stlist$First.CIS.Enrollment.Date < Q2_date, 
+                               stlist$no_metrics_Q2 <- (rowSums(is.na(stlist[, metrics_colums[6:10]])) > 1 ),
+                               stlist$no_metrics_Q2 <- FALSE)  
+  
+
+stlist$no_metrics_Q3 <- ifelse(Sys.Date() > Q3_date & 
+                                 stlist$First.CIS.Enrollment.Date < Q3_date, 
+                               stlist$no_metrics_Q3 <- (rowSums(is.na(stlist[, metrics_colums[11:15]])) > 1 ),
+                               stlist$no_metrics_Q3 <- FALSE)  
+
+stlist$no_metrics_Q4 <- ifelse(Sys.Date() > Q4_date & 
+                                 stlist$First.CIS.Enrollment.Date < Q4_date, 
+                               stlist$no_metrics_Q4 <- (rowSums(is.na(stlist[, metrics_colums[16:20]])) > 1),
+                               stlist$no_metrics_Q4 <- FALSE)  
+
+
+
+stlist$no_metrics <- apply(stlist[,66:69], 1, any)
 
 
 
@@ -215,7 +269,7 @@ improve.elem.attend <- subset(stlist, stlist$School %in% elem  & ((stlist$`Q2_At
 #improve.elem.attend <- subset(improve.elem.attend, !is.na(improve.elem.attend$Name))
 #elem.attend.eligible <- subset(stlist, stlist$Site %in% elem  &  (stlist$totabs1 > 3 | stlist$totabs2 > 3 | stlist$totabs3 > 3 | stlist$totabs4 > 3))
 
-improve.elem.attend <- subset(stlist, stlist$School %in% high  & ((stlist$`Q2_Attendance Rate` - stlist$`Q1_Attendance Rate`) + (stlist$`Q3_Attendance Rate` - stlist$`Q2_Attendance Rate`) >= 10))
+improve.high.attend <- subset(stlist, stlist$School %in% high  & ((stlist$`Q2_Attendance Rate` - stlist$`Q1_Attendance Rate`) + (stlist$`Q3_Attendance Rate` - stlist$`Q2_Attendance Rate`) >= 10))
 #improve.high.attend <- subset(improve.high.attend, !is.na(improve.high.attend$Name))
 #high.attend.eligible <- subset(stlist, stlist$Site %in% high  &  (stlist$totabs1 > 5 | stlist$totabs2 > 5 | stlist$totabs3 > 5 | stlist$totabs4 > 5))
 
@@ -228,7 +282,7 @@ improve.grades <- merge(improve.grades, improve.elm.math, all = T)
 improve.grades$improve.grades <- TRUE
 
 improve.attend <- merge(improve.high.attend, improve.elem.attend, all = T)
-improve.attend$attned <- TRUE
+improve.attend$attend <- TRUE
 
 stlist$improve_grades <- F
 stlist$improve_math <- F
@@ -236,6 +290,7 @@ stlist$improve_science <- F
 stlist$improve_ela <- F
 stlist$improve_all_grades <- F
 
+stlist$improve_attend <- ifelse(stlist$Student.ID %in% improve.attend$Student.ID, stlist$improve.attend <- T, stlist$improve.attend <- F)
 stlist$improve_grades <- ifelse(stlist$Student.ID %in% improve.grades$Student.ID, stlist$improve_grades <- T, stlist$improve_grades <- F)
 stlist$improve_math <- ifelse(stlist$Student.ID %in% improve.grades[improve.grades$improve_math == T, "Student.ID"], stlist$improve_math <- T, stlist$improve_math <- F)
 stlist$improve_science <- ifelse(stlist$Student.ID %in% improve.grades[improve.grades$improve_science == T, "Student.ID"], stlist$improve_science <- T, stlist$improve_science <- F)
@@ -243,6 +298,42 @@ stlist$improve_ela <- ifelse(stlist$Student.ID %in% improve.grades[improve.grade
 stlist$improve_all_grades <- ifelse(stlist$improve_ela == T & stlist$improve_science == T & stlist$improve_math == T, stlist$improve_all_grades <- T, stlist$improve_all_grades <- F)
 
 
+
+#Bottom flagging students by percentiles (1/3)
+
+
+
+stlist$grade_quintile <- 2
+
+
+
+# for (school in levels(stlist$School)){
+for(row in 1:nrow(stlist)){
+  if(!is.na(stlist[row,]$avg.grade.Q1) & stlist[row,]$avg.grade.Q1 < quantile(stlist[stlist$School == stlist[row,]$School,]$avg.grade.Q1, prob = 0.33, na.rm = T)){
+    stlist[row,]$grade_quintile <- 1
+  }
+  else if(!is.na(stlist[row,]$avg.grade.Q1) & stlist[row,]$avg.grade.Q1 > quantile(stlist[stlist$School == stlist[row,]$School,]$avg.grade.Q1, prob = 0.67, na.rm = T)){
+    stlist[row,]$grade_quintile <- 3
+  }
+  
+}
+
+
+
+#   ifelse(stlist$School == school,
+#     ifelse(stlist$avg.grade.Q1 < quantile(stlist[stlist$School == school,]$avg.grade.Q1, prob = 0.01, na.rm = T), stlist$grade_quintile <- 1, stlist$grade_quintile),
+#     stlist$grade_quintile)
+# }
+
+mac_save_wd <- "/Volumes/GoogleDrive/Team Drives/Data/Generated Files/"
+windows_save_wd <- "C:/Users/USER/Google Drive/Data Files"
+if(file.exists(mac_save_wd)){
+  setwd(file.path(mac_save_wd))
+} else { 
+  if(file.exists(windows_save_wd)){
+    setwd(file.path(windows_save_wd))
+  }
+}
 
 write.csv(stlist, "studentlist.csv")
 

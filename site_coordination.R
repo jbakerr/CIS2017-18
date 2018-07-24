@@ -1,4 +1,4 @@
-macdatawd <- "/Volumes/GoogleDrive/My Drive/Data Files"
+macdatawd <- "/Volumes/GoogleDrive/Team Drives/Data/CISDM Files/"
 windowsdatawd <- "C:/Users/USER/Google Drive/Data Files"
 if(file.exists(macdatawd)){
   setwd(file.path(macdatawd))
@@ -16,6 +16,17 @@ site_coordination <-readWorksheetFromFile('site_coordination.xlsx', sheet=1, hea
 site_coordination <- site_coordination[!is.na(site_coordination$School), ]
 
 #colnames(site_coordination)[15:18] <- c("students_served", "parents_served", "other_served", "volunteers")
+
+
+mac_save_wd <- "/Volumes/GoogleDrive/Team Drives/Data/Generated Files/"
+windows_save_wd <- "C:/Users/USER/Google Drive/Data Files"
+if(file.exists(mac_save_wd)){
+  setwd(file.path(mac_save_wd))
+} else { 
+  if(file.exists(windows_save_wd)){
+    setwd(file.path(windows_save_wd))
+  }
+}
 
 write.csv(site_coordination, "site_coordination.csv")
 

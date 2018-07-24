@@ -9,7 +9,11 @@
 # install.packages('openxlsx')
 # install.packages('readxl')
 # install.packages("devtools")
+# install.packages("shiny")
+# install.packages("googlesheets")
+# install.packages('googledrive')
 options(java.parameters = "-Xmx3000m")
+
 
 library(plyr) # ****IMPORTANT**** Load plyr before dplyr- they have some of the same named functions, and if you load in a different order it will cause problems
 library(dplyr)
@@ -20,12 +24,17 @@ library(lubridate)
 # library(openxlsx)
 # library(xlsx)
 # library(readxl)
+library(shiny)
+# library(openxlsx)
+# library(googlesheets)
+# library(googledrive)
+library(readxl)
 
 
 ###################################      Generating Student List      ##########################################
 # Set the working directory to the local folder containing dataset. Can be done manually
 # by going to Session -> Set Working Directory -> Choose Directory 
-macdatawd <- "/Volumes/GoogleDrive/My Drive/Data Files"
+macdatawd <- "/Volumes/GoogleDrive/Team Drives/Data/CISDM Files/"
 windowsdatawd <- "C:/Users/USER/Google Drive/Data Files"
 if(file.exists(macdatawd)){
   setwd(file.path(macdatawd))
@@ -34,6 +43,7 @@ if(file.exists(macdatawd)){
     setwd(file.path(windowsdatawd))
   }
 }
+
 
 
 #Setting Vectors that will be used throughout program

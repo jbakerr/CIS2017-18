@@ -1,4 +1,4 @@
-macdatawd <- "/Volumes/GoogleDrive/My Drive/Data Files"
+macdatawd <- "/Volumes/GoogleDrive/Team Drives/Data/CISDM Files/"
 windowsdatawd <- "C:/Users/USER/Google Drive/Data Files"
 if(file.exists(macdatawd)){
   setwd(file.path(macdatawd))
@@ -9,7 +9,21 @@ if(file.exists(macdatawd)){
 }
 
 #Load Student Progress Monitoring Excel Sheet
-progress<-readWorksheetFromFile('progress.xlsx', sheet=1, header = T, startRow = 1)
+# progress<-readWorksheetFromFile('progress.xlsx', sheet=1, header = T, startRow = 1)
+
+nms <- names(read_excel('progress.xlsx', n_max = 0))
+
+
+ct <- ifelse(grepl("Date", nms), "date", "guess")
+
+# caselist <- read_excel(readxl_example("datasets.xlsx"), col_types = ct)
+
+progress <- read_excel('progress.xlsx', sheet = 1,skip = 0, col_types = ct)
+
+colnames(progress) <- make.names(colnames(progress))
+
+
+
 
 
 #Rename Grading Quarters - make sure that the column numbers are acurate 
@@ -96,8 +110,22 @@ progress$Target_Science <- NULL
 
 #Adding Caselist 
 
+
+nms <- names(read_excel('caselist.xlsx', n_max = 0))
+
+
+ct <- ifelse(grepl("Date", nms), "date", "guess")
+
+# caselist <- read_excel(readxl_example("datasets.xlsx"), col_types = ct)
+
+caselist <- read_excel('caselist.xlsx', sheet = 1,skip = 0, col_types = ct)
+
+colnames(caselist) <- make.names(colnames(caselist))
+
+
+
 #caselist<-read.csv('caselist.csv', skip = 3, header = T, sep = ",")
-caselist<-readWorksheetFromFile('caselist.xlsx', sheet=1, header = T, startRow = 2)
+# caselist<-readWorksheetFromFile('caselist.xlsx', sheet=1, header = T, startRow = 2)
 
 caselist <- data.frame(apply(caselist, 2, function(x) gsub("^$|^ $", NA, x)))
 
@@ -119,9 +147,12 @@ progress_test <- progress[duplicated(progress[,c("Student.ID")]), ] # This is a 
 #progress$Student <- NULL 
 #caselist$Student <- NULL 
 
-progress$Student.ID <- NULL
+# progress$Student.ID <- NULL
+# progress$Case.Manager <- NULL
+progress[,c(1:2, 4:6)] <- NULL
 
-progress <- merge(caselist, progress, all = T)
+
+progress <- merge(caselist, progress, by = "Student.ID", all = T)
 
 
 
@@ -152,7 +183,9 @@ age_years <- function(earlier, later)
 
 progress$Birth.Date <- as.Date(progress$Birth.Date)
 
+
 progress$age <- age_years(progress$Birth.Date, Sys.Date())
+
 
 
 

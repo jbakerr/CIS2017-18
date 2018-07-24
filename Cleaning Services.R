@@ -1,4 +1,4 @@
-macdatawd <- "/Volumes/GoogleDrive/My Drive/Data Files"
+macdatawd <- "/Volumes/GoogleDrive/Team Drives/Data/CISDM Files/"
 windowsdatawd <- "C:/Users/USER/Google Drive/Data Files"
 if(file.exists(macdatawd)){
   setwd(file.path(macdatawd))
@@ -14,7 +14,26 @@ if(file.exists(macdatawd)){
 # **** IMPORTANT ***** delete the last row that sums all hours before saving the excel file. That row will cause problems
 #data<-('services.csv', skip = 4, header = T)
 # xlsxFile <- system.file("/Volumes/GoogleDrive/My Drive/Data Files/services.xlsx", package = "openxlsx")
-data <-readWorksheetFromFile('services.xlsx', sheet=1, header = T, startRow = 2)
+
+nms <- names(read_excel('services.xlsx', n_max = 0))
+
+
+ct <- ifelse(grepl("Date", nms), "date", "guess")
+
+# caselist <- read_excel(readxl_example("datasets.xlsx"), col_types = ct)
+
+data <- read_excel('services.xlsx', sheet = 1,skip = 0, col_types = ct)
+
+colnames(data) <- make.names(colnames(data))
+
+
+# data <- read.xlsx('services.xlsx', sheet = 1, startRow = 2)
+
+# data$Entry.Date <- convertToDate(data$Entry.Date)
+
+# data$Support.Date <- convertToDate(data$Support.Date)
+
+# data <-readWorksheetFromFile('services.xlsx', sheet=1, header = T, startRow = 2)
 data <- data.frame(apply(data, 2, function(x) gsub("^$|^ $", NA, x)))
 
 data  <- data[,colSums(is.na(data))<nrow(data)]
@@ -54,7 +73,15 @@ data$Hours <- as.numeric.factor(data$Hours)
 data$hoursspent <- data$Hours/data$groupsize
 
 
-
+mac_save_wd <- "/Volumes/GoogleDrive/Team Drives/Data/Generated Files/"
+windows_save_wd <- "C:/Users/USER/Google Drive/Data Files"
+if(file.exists(mac_save_wd)){
+  setwd(file.path(mac_save_wd))
+} else { 
+  if(file.exists(windows_save_wd)){
+    setwd(file.path(windows_save_wd))
+  }
+}
 
 
 #Saving Data
